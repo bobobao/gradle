@@ -1,5 +1,6 @@
 package configurations
 
+import common.Os
 import common.functionalTestExtraParameters
 import jetbrains.buildServer.configs.kotlin.v2019_2.BuildSteps
 import model.CIBuildModel
