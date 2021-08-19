@@ -14,6 +14,7 @@ import model.DefaultFunctionalTestBucketProvider
 import model.FunctionalTestBucketProvider
 import model.GradleSubproject
 import model.JsonBasedGradleSubprojectProvider
+import model.SmallSubprojectBucket
 import model.Stage
 import model.StageNames
 import model.TestCoverage
@@ -87,11 +88,10 @@ class CIConfigIntegrationTests {
 
     class SubProjectBucketProvider(private val model: CIBuildModel) : FunctionalTestBucketProvider {
         override fun createFunctionalTestsFor(stage: Stage, testCoverage: TestCoverage) =
-            model.subprojects.subprojects.map { it.createFunctionalTestsFor(model, stage, testCoverage, Int.MAX_VALUE) }
+            model.subprojects.subprojects.map {
+                SmallSubprojectBucket(it, false).createFunctionalTestsFor(model, stage, testCoverage, Int.MAX_VALUE)
+            }
     }
-
-    private
-    fun Project.searchBuildProject(id: String): StageProject = (subProjects.find { it.id!!.value == id } as StageProject)
 
     private
     val largeSubProjectRegex = """\((\w+(_\d+))\)""".toRegex()
@@ -150,7 +150,9 @@ class CIConfigIntegrationTests {
             CROSS_VERSION_BUCKETS.forEachIndexed { index: Int, startEndVersion: List<String> ->
                 assertTrue(functionalTests[index].name.contains("(${startEndVersion[0]} <= gradle <${startEndVersion[1]})"))
                 assertEquals("clean ${testType}Test", functionalTests[index].getGradleTasks())
-                assertTrue(functionalTests[index].getGradleParams().contains("-PonlyTestGradleVersion=${startEndVersion[0]}-${startEndVersion[1]}"))
+                assertTrue(functionalTests[index].getGradleParams().apply {
+                    println(this)
+                }.contains("-PonlyTestGradleVersion=${startEndVersion[0]}-${startEndVersion[1]}"))
             }
         }
 

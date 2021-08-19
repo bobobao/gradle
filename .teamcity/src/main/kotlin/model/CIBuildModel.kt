@@ -14,8 +14,8 @@ import configurations.Gradleception
 import configurations.SanityCheck
 import configurations.SmokeTests
 import configurations.TestPerformanceTest
-import projects.DEFAULT_LINUX_FUNCTIONAL_TEST_BUCKET_SIZE
 import projects.DEFAULT_FUNCTIONAL_TEST_BUCKET_SIZE
+import projects.DEFAULT_LINUX_FUNCTIONAL_TEST_BUCKET_SIZE
 
 enum class StageNames(override val stageName: String, override val description: String, override val uuid: String) : StageName {
     QUICK_FEEDBACK_LINUX_ONLY("Quick Feedback - Linux Only", "Run checks and functional tests (embedded executer, Linux)", "QuickFeedbackLinuxOnly"),
@@ -201,32 +201,8 @@ interface BuildTypeBucket {
     fun getDescription(testCoverage: TestCoverage): String = throw UnsupportedOperationException()
 }
 
-data class GradleSubproject(val name: String, val unitTests: Boolean = true, val functionalTests: Boolean = true, val crossVersionTests: Boolean = false) : BuildTypeBucket {
-    override fun createFunctionalTestsFor(model: CIBuildModel, stage: Stage, testCoverage: TestCoverage, bucketIndex: Int): FunctionalTest {
-        return FunctionalTest(
-            model,
-            testCoverage.getBucketUuid(model, bucketIndex),
-            getName(testCoverage),
-            getDescription(testCoverage),
-            testCoverage,
-            stage,
-            listOf(name)
-        )
-    }
-
-    // Build Template or Configuration "Gradle_Check_Platform_4_platform-play" is invalid: contains unsupported character '-'. ID should start with a latin letter
-    // and contain only latin letters, digits and underscores (at most 225 characters).
-    private fun String.kebabCaseToCamelCase() = split('-')
-        .map { it.capitalize() }
-        .joinToString("")
-        .decapitalize()
-
-    override fun getName(testCoverage: TestCoverage): String = "${testCoverage.asName()} ($name)"
-
-    override fun getDescription(testCoverage: TestCoverage) = "${testCoverage.asName()} for $name"
-
+data class GradleSubproject(val name: String, val unitTests: Boolean = true, val functionalTests: Boolean = true, val crossVersionTests: Boolean = false) {
     fun hasTestsOf(testType: TestType) = (unitTests && testType.unitTests) || (functionalTests && testType.functionalTests) || (crossVersionTests && testType.crossVersionTests)
-
     fun asDirectoryName() = name.replace(Regex("([A-Z])")) { "-" + it.groups[1]!!.value.toLowerCase() }
 }
 
@@ -383,6 +359,7 @@ enum class Trigger {
 }
 
 const val GRADLE_BUILD_SMOKE_TEST_NAME = "gradleBuildSmokeTest"
+
 enum class SpecificBuild {
     CompileAll {
         override fun create(model: CIBuildModel, stage: Stage): BaseGradleBuildType {

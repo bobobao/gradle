@@ -11,7 +11,7 @@ import model.TestType
 import model.getBucketUuid
 
 const val DEFAULT_FUNCTIONAL_TEST_BUCKET_SIZE = 50
-const val DEFAULT_LINUX_FUNCTIONAL_TEST_BUCKET_SIZE = 30
+const val DEFAULT_LINUX_FUNCTIONAL_TEST_BUCKET_SIZE = 20
 
 class FunctionalTestProject(
     val model: CIBuildModel,
@@ -32,8 +32,8 @@ class FunctionalTestProject(
 
     /**
      * These build configurations are used to retain build histories. For example, we had 50 buckets before,
-     * if we remove 20 of them, the histories are not accessible any more. As a workaround, we don't remove
-     * the 20 buckets but not dependencies of trigger build.
+     * if we remove 30 of them, the histories are not accessible anymore. As a workaround, we don't remove
+     * the 30 buckets but not dependencies of trigger build.
      */
     private fun createDummyBuckets(): List<FunctionalTest> {
         if (testCoverage.os != Os.LINUX) {
@@ -49,10 +49,11 @@ class FunctionalTestProject(
             FunctionalTest(
                 model,
                 testCoverage.getBucketUuid(model, it),
-                "${testCoverage.asName()} (bucket${it + 1})",
-                "${testCoverage.asName()} (bucket${it + 1})",
+                "${testCoverage.asName()} (dummy bucket${it + 1})",
+                "${testCoverage.asName()} (dummy bucket${it + 1})",
                 testCoverage,
                 stage,
+                false,
                 listOf("dummy")
             )
         }
