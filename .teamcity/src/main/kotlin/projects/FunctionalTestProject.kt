@@ -1,6 +1,7 @@
 package projects
 
 import common.Os
+import configurations.BaseGradleBuildType
 import configurations.FunctionalTest
 import jetbrains.buildServer.configs.kotlin.v2019_2.Project
 import model.CIBuildModel
@@ -22,12 +23,12 @@ class FunctionalTestProject(
     this.id(testCoverage.asId(model))
     this.name = testCoverage.asName()
 }) {
-    val functionalTests: List<FunctionalTest> = functionalTestBucketProvider.createFunctionalTestsFor(stage, testCoverage)
-    private val dummyLinuxFunctionalTests: List<FunctionalTest> = createDummyBuckets()
+    val functionalTests: List<BaseGradleBuildType> = functionalTestBucketProvider.createFunctionalTestsFor(stage, testCoverage).let {
+        addDummyBuckets(it)
+    }
 
     init {
         functionalTests.forEach(this::buildType)
-        dummyLinuxFunctionalTests.forEach(this::buildType)
     }
 
     /**
@@ -35,27 +36,29 @@ class FunctionalTestProject(
      * if we remove 30 of them, the histories are not accessible anymore. As a workaround, we don't remove
      * the 30 buckets but not dependencies of trigger build.
      */
-    private fun createDummyBuckets(): List<FunctionalTest> {
+    private fun addDummyBuckets(functionalTestBuckets: List<FunctionalTest>): List<BaseGradleBuildType> {
         if (testCoverage.os != Os.LINUX) {
-            return emptyList()
+            return functionalTestBuckets
         }
         if (testCoverage.testType == TestType.quickFeedbackCrossVersion ||
             testCoverage.testType == TestType.allVersionsCrossVersion ||
             testCoverage.testType == TestType.allVersionsIntegMultiVersion
         ) {
-            return emptyList()
+            return functionalTestBuckets
         }
-        return (functionalTests.size until DEFAULT_FUNCTIONAL_TEST_BUCKET_SIZE).map {
-            FunctionalTest(
-                model,
+        return functionalTestBuckets + (functionalTestBuckets.size until DEFAULT_FUNCTIONAL_TEST_BUCKET_SIZE).map {
+            DummyFunctionalTest(
                 testCoverage.getBucketUuid(model, it),
                 "${testCoverage.asName()} (dummy bucket${it + 1})",
                 "${testCoverage.asName()} (dummy bucket${it + 1})",
-                testCoverage,
-                stage,
-                false,
-                listOf("dummy")
+                stage
             )
         }
     }
 }
+
+class DummyFunctionalTest(id: String, name: String, description: String, stage: Stage) : BaseGradleBuildType(stage, init = {
+    this.name = name
+    this.description = description
+    this.id(id)
+})

@@ -2,7 +2,7 @@ import common.JvmVendor
 import common.JvmVersion
 import common.Os
 import common.VersionedSettingsBranch
-import configurations.FunctionalTest
+import configurations.BaseGradleBuildType
 import jetbrains.buildServer.configs.kotlin.v2019_2.AbsoluteId
 import jetbrains.buildServer.configs.kotlin.v2019_2.DslContext
 import jetbrains.buildServer.configs.kotlin.v2019_2.Project
@@ -100,29 +100,29 @@ class CIConfigIntegrationTests {
      * Test Coverage - AllVersionsCrossVersion Java8 Oracle Linux (core_2) -> core_2
      */
     private
-    fun FunctionalTest.getSubProjectSplitName() = largeSubProjectRegex.find(this.name)!!.groupValues[1]
+    fun BaseGradleBuildType.getSubProjectSplitName() = largeSubProjectRegex.find(this.name)!!.groupValues[1]
 
     private
-    fun FunctionalTest.getGradleTasks(): String {
+    fun BaseGradleBuildType.getGradleTasks(): String {
         val runnerStep = this.steps.items.find { it.name == "GRADLE_RUNNER" } as GradleBuildStep
         return runnerStep.tasks!!
     }
 
     private
-    fun FunctionalTest.getGradleParams(): String {
+    fun BaseGradleBuildType.getGradleParams(): String {
         val runnerStep = this.steps.items.find { it.name == "GRADLE_RUNNER" } as GradleBuildStep
         return runnerStep.gradleParams!!
     }
 
     @Test
     fun canSplitLargeProjects() {
-        fun assertAllSplitsArePresent(subProjectName: String, functionalTests: List<FunctionalTest>) {
+        fun assertAllSplitsArePresent(subProjectName: String, functionalTests: List<BaseGradleBuildType>) {
             val splitSubProjectNames = functionalTests.map { it.getSubProjectSplitName() }.toSet()
             val expectedProjectNames = (1..functionalTests.size).map { "${subProjectName}_$it" }.toSet()
             assertEquals(expectedProjectNames, splitSubProjectNames)
         }
 
-        fun assertCorrectParameters(subProjectName: String, functionalTests: List<FunctionalTest>) {
+        fun assertCorrectParameters(subProjectName: String, functionalTests: List<BaseGradleBuildType>) {
             functionalTests.forEach { assertTrue(it.getGradleTasks().startsWith("clean $subProjectName")) }
             if (functionalTests.size == 1) {
                 assertFalse(functionalTests[0].getGradleParams().contains("-PincludeTestClasses"))
@@ -138,15 +138,15 @@ class CIConfigIntegrationTests {
             }
         }
 
-        fun assertProjectAreSplitByClassesCorrectly(functionalTests: List<FunctionalTest>) {
-            val functionalTestsWithSplit: Map<String, List<FunctionalTest>> = functionalTests.filter { largeSubProjectRegex.containsMatchIn(it.name) }.groupBy { it.getSubProjectSplitName().substringBefore('_') }
+        fun assertProjectAreSplitByClassesCorrectly(functionalTests: List<BaseGradleBuildType>) {
+            val functionalTestsWithSplit: Map<String, List<BaseGradleBuildType>> = functionalTests.filter { largeSubProjectRegex.containsMatchIn(it.name) }.groupBy { it.getSubProjectSplitName().substringBefore('_') }
             functionalTestsWithSplit.forEach {
                 assertAllSplitsArePresent(it.key, it.value)
                 assertCorrectParameters(it.key, it.value)
             }
         }
 
-        fun assertProjectAreSplitByGradleVersionCorrectly(testType: TestType, functionalTests: List<FunctionalTest>) {
+        fun assertProjectAreSplitByGradleVersionCorrectly(testType: TestType, functionalTests: List<BaseGradleBuildType>) {
             CROSS_VERSION_BUCKETS.forEachIndexed { index: Int, startEndVersion: List<String> ->
                 assertTrue(functionalTests[index].name.contains("(${startEndVersion[0]} <= gradle <${startEndVersion[1]})"))
                 assertEquals("clean ${testType}Test", functionalTests[index].getGradleTasks())
