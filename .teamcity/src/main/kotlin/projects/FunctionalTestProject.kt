@@ -1,7 +1,9 @@
 package projects
 
 import common.Os
+import common.compileAllDependency
 import configurations.BaseGradleBuildType
+import configurations.CompileAllProduction
 import configurations.FunctionalTest
 import jetbrains.buildServer.configs.kotlin.v2019_2.Project
 import model.CIBuildModel
@@ -48,6 +50,7 @@ class FunctionalTestProject(
         }
         return functionalTestBuckets + (functionalTestBuckets.size until DEFAULT_FUNCTIONAL_TEST_BUCKET_SIZE).map {
             DummyFunctionalTest(
+                model,
                 testCoverage.getBucketUuid(model, it),
                 "${testCoverage.asName()} (dummy bucket${it + 1})",
                 "${testCoverage.asName()} (dummy bucket${it + 1})",
@@ -57,8 +60,12 @@ class FunctionalTestProject(
     }
 }
 
-class DummyFunctionalTest(id: String, name: String, description: String, stage: Stage) : BaseGradleBuildType(stage, init = {
+class DummyFunctionalTest(model: CIBuildModel, id: String, name: String, description: String, stage: Stage) : BaseGradleBuildType(stage, init = {
     this.name = name
     this.description = description
     this.id(id)
+
+    dependencies {
+        compileAllDependency(CompileAllProduction.buildTypeId(model))
+    }
 })
