@@ -269,14 +269,14 @@ class ProgressEvents implements ProgressListener {
      */
     Operation operation(String... displayNames) {
         assertHasZeroOrMoreTrees()
-        def operations = operations.findAll { it.descriptor.displayName in displayNames }
-        if (operations.empty) {
+        def candidates = operations.findAll { it.descriptor.displayName in displayNames }
+        if (candidates.empty) {
             throw new AssertionFailedError("No operation with display name '${displayNames[0]}' found in:\n${describeList(operations)}")
         }
-        if (operations.size() != 1) {
+        if (candidates.size() != 1) {
             throw new AssertionFailedError("Multiple operation with display name '${displayNames[0]}' found in:\n${describeList(operations)}")
         }
-        return operations[0]
+        return candidates[0]
     }
 
     /**

@@ -549,7 +549,8 @@ public class BuildProgressListenerAdapter implements InternalBuildProgressListen
     }
 
     private FileDownloadOperationDescriptor toFileDownloadDescriptor(InternalFileDownloadDescriptor descriptor) {
-        return new DefaultFileDownloadOperationDescriptor(descriptor);
+        OperationDescriptor parent = getParentDescriptor(descriptor.getParentId());
+        return new DefaultFileDownloadOperationDescriptor(descriptor, parent);
     }
 
     private TestOutputDescriptor toTestOutputDescriptor(InternalTestOutputEvent event, InternalTestOutputDescriptor descriptor) {
