@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.gradle.tooling.internal.protocol.events;
+package org.gradle.tooling.events.download;
 
-import java.net.URI;
+import org.gradle.tooling.events.StartEvent;
 
 /**
- * DO NOT CHANGE THIS INTERFACE. It is part of the cross-version protocol.
+ * An event that indicates the start of a file download.
  *
  * @since 7.3
  */
-public interface InternalFileDownloadDescriptor extends InternalOperationDescriptor {
-    URI getUri();
+public interface FileDownloadStartEvent extends FileDownloadProgressEvent, StartEvent {
 }

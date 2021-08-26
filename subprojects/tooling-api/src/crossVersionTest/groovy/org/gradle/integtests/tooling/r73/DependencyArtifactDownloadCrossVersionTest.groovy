@@ -22,6 +22,7 @@ import org.gradle.integtests.tooling.fixture.TargetGradleVersion
 import org.gradle.integtests.tooling.fixture.ToolingApiVersion
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.events.OperationType
+import org.gradle.tooling.events.download.FileDownloadOperationDescriptor
 
 @ToolingApiVersion(">=7.3")
 @TargetGradleVersion(">=7.3")
@@ -40,8 +41,17 @@ class DependencyArtifactDownloadCrossVersionTest extends AbstractHttpCrossVersio
 
         then:
         events.operations.size() == 8
-        events.operation("Download ${modules.projectB.pom.uri}")
+        events.operations.each {
+            assert it.descriptor instanceof FileDownloadOperationDescriptor
+        }
+        events.operation("Download ${modules.projectB.pom.uri}").descriptor.uri == modules.projectB.pom.uri
         events.operation("Download ${modules.projectB.artifact.uri}")
+        events.operation("Download ${modules.projectC.rootMetaData.uri}")
+        events.operation("Download ${modules.projectC.pom.uri}")
+        events.operation("Download ${modules.projectC.artifact.uri}")
+        events.operation("Download ${modules.projectD.pom.uri}")
+        events.operation("Download ${modules.projectD.metaData.uri}")
+        events.operation("Download ${modules.projectD.artifact.uri}")
     }
 
     @TargetGradleVersion(">=3.5 <7.3")
