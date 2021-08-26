@@ -41,17 +41,14 @@ class DependencyArtifactDownloadCrossVersionTest extends AbstractHttpCrossVersio
 
         then:
         events.operations.size() == 8
-        events.operations.each {
-            assert it.descriptor instanceof FileDownloadOperationDescriptor
-        }
-        events.operation("Download ${modules.projectB.pom.uri}").descriptor.uri == modules.projectB.pom.uri
-        events.operation("Download ${modules.projectB.artifact.uri}")
-        events.operation("Download ${modules.projectC.rootMetaData.uri}")
-        events.operation("Download ${modules.projectC.pom.uri}")
-        events.operation("Download ${modules.projectC.artifact.uri}")
-        events.operation("Download ${modules.projectD.pom.uri}")
-        events.operation("Download ${modules.projectD.metaData.uri}")
-        events.operation("Download ${modules.projectD.artifact.uri}")
+        events.operation("Download ${modules.projectB.pom.uri}").isDownload(modules.projectB.pom.uri)
+        events.operation("Download ${modules.projectB.artifact.uri}").isDownload(modules.projectB.artifact.uri)
+        events.operation("Download ${modules.projectC.rootMetaData.uri}").isDownload(modules.projectC.rootMetaData.uri)
+        events.operation("Download ${modules.projectC.pom.uri}").isDownload(modules.projectC.pom.uri)
+        events.operation("Download ${modules.projectC.artifact.uri}").isDownload(modules.projectC.artifact.uri)
+        events.operation("Download ${modules.projectD.pom.uri}").isDownload(modules.projectD.pom.uri)
+        events.operation("Download ${modules.projectD.metaData.uri}").isDownload(modules.projectD.metaData.uri)
+        events.operation("Download ${modules.projectD.artifact.uri}").isDownload(modules.projectD.artifact.uri)
     }
 
     @TargetGradleVersion(">=3.5 <7.3")

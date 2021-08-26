@@ -29,6 +29,9 @@ import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.events.StartEvent
 import org.gradle.tooling.events.SuccessResult
 import org.gradle.tooling.events.configuration.ProjectConfigurationOperationDescriptor
+import org.gradle.tooling.events.download.FileDownloadFinishEvent
+import org.gradle.tooling.events.download.FileDownloadOperationDescriptor
+import org.gradle.tooling.events.download.FileDownloadStartEvent
 import org.gradle.tooling.events.task.TaskOperationDescriptor
 import org.gradle.tooling.events.test.TestOperationDescriptor
 import org.gradle.tooling.events.transform.TransformOperationDescriptor
@@ -108,7 +111,7 @@ class ProgressEvents implements ProgressListener {
                     assert descriptor.parent == null || running.containsKey(descriptor.parent)
                     def parent = descriptor.parent == null ? null : operations.find { it.descriptor == descriptor.parent }
 
-                    Operation operation = newOperation(parent, descriptor)
+                    Operation operation = newOperation(event, parent, descriptor)
                     operations.add(operation)
 
                     assert descriptor.displayName == descriptor.toString()
@@ -122,6 +125,7 @@ class ProgressEvents implements ProgressListener {
                     assert descriptor.parent == null || running.containsKey(descriptor.parent)
 
                     def storedOperation = operations.find { it.descriptor == descriptor }
+                    storedOperation.finishEvent = event
                     storedOperation.result = event.result
 
                     assert event.displayName.matches("\\Q${descriptor.displayName}\\E [\\w-]+")
@@ -148,8 +152,8 @@ class ProgressEvents implements ProgressListener {
         }
     }
 
-    protected Operation newOperation(Operation parent, OperationDescriptor descriptor) {
-        new Operation(parent, descriptor)
+    protected Operation newOperation(StartEvent startEvent, Operation parent, OperationDescriptor descriptor) {
+        new Operation(startEvent, parent, descriptor)
     }
 
     protected void otherEvent(ProgressEvent event, Operation operation) {
@@ -315,12 +319,15 @@ class ProgressEvents implements ProgressListener {
     }
 
     static class Operation {
+        final StartEvent startEvent
         final OperationDescriptor descriptor
         final Operation parent
         final List<Operation> children = []
+        FinishEvent finishEvent
         OperationResult result
 
-        protected Operation(Operation parent, OperationDescriptor descriptor) {
+        protected Operation(StartEvent startEvent, Operation parent, OperationDescriptor descriptor) {
+            this.startEvent = startEvent
             this.descriptor = descriptor
             this.parent = parent
             if (parent != null) {
@@ -449,6 +456,13 @@ class ProgressEvents implements ProgressListener {
             return parent == null
                 ? false
                 : (predicate.test(parent) || parent.hasAncestor(predicate))
+        }
+
+        void isDownload(URI uri) {
+            assert startEvent instanceof FileDownloadStartEvent
+            assert finishEvent instanceof FileDownloadFinishEvent
+            assert descriptor instanceof FileDownloadOperationDescriptor
+            assert descriptor.uri == uri
         }
     }
 

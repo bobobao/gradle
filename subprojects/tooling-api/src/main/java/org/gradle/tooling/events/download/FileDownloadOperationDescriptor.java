@@ -16,6 +16,7 @@
 
 package org.gradle.tooling.events.download;
 
+import org.gradle.api.Incubating;
 import org.gradle.tooling.events.OperationDescriptor;
 
 import java.net.URI;
@@ -25,6 +26,7 @@ import java.net.URI;
  *
  * @since 7.3
  */
+@Incubating
 public interface FileDownloadOperationDescriptor extends OperationDescriptor {
     /**
      * Returns the URI that the file is downloaded from.
