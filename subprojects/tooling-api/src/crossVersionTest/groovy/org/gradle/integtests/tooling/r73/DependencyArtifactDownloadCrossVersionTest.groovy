@@ -22,7 +22,6 @@ import org.gradle.integtests.tooling.fixture.TargetGradleVersion
 import org.gradle.integtests.tooling.fixture.ToolingApiVersion
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.events.OperationType
-import org.gradle.tooling.events.download.FileDownloadOperationDescriptor
 
 @ToolingApiVersion(">=7.3")
 @TargetGradleVersion(">=7.3")
@@ -41,14 +40,14 @@ class DependencyArtifactDownloadCrossVersionTest extends AbstractHttpCrossVersio
 
         then:
         events.operations.size() == 8
-        events.operation("Download ${modules.projectB.pom.uri}").isDownload(modules.projectB.pom.uri)
-        events.operation("Download ${modules.projectB.artifact.uri}").isDownload(modules.projectB.artifact.uri)
-        events.operation("Download ${modules.projectC.rootMetaData.uri}").isDownload(modules.projectC.rootMetaData.uri)
-        events.operation("Download ${modules.projectC.pom.uri}").isDownload(modules.projectC.pom.uri)
-        events.operation("Download ${modules.projectC.artifact.uri}").isDownload(modules.projectC.artifact.uri)
-        events.operation("Download ${modules.projectD.pom.uri}").isDownload(modules.projectD.pom.uri)
-        events.operation("Download ${modules.projectD.metaData.uri}").isDownload(modules.projectD.metaData.uri)
-        events.operation("Download ${modules.projectD.artifact.uri}").isDownload(modules.projectD.artifact.uri)
+        events.operation("Download ${modules.projectB.pom.uri}").assertIsDownload(modules.projectB.pom.uri)
+        events.operation("Download ${modules.projectB.artifact.uri}").assertIsDownload(modules.projectB.artifact.uri)
+        events.operation("Download ${modules.projectC.rootMetaData.uri}").assertIsDownload(modules.projectC.rootMetaData.uri)
+        events.operation("Download ${modules.projectC.pom.uri}").assertIsDownload(modules.projectC.pom.uri)
+        events.operation("Download ${modules.projectC.artifact.uri}").assertIsDownload(modules.projectC.artifact.uri)
+        events.operation("Download ${modules.projectD.pom.uri}").assertIsDownload(modules.projectD.pom.uri)
+        events.operation("Download ${modules.projectD.metaData.uri}").assertIsDownload(modules.projectD.metaData.uri)
+        events.operation("Download ${modules.projectD.artifact.uri}").assertIsDownload(modules.projectD.artifact.uri)
     }
 
     @TargetGradleVersion(">=3.5 <7.3")

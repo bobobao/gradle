@@ -28,14 +28,24 @@ import org.gradle.tooling.events.ProgressEvent
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.events.StartEvent
 import org.gradle.tooling.events.SuccessResult
+import org.gradle.tooling.events.configuration.ProjectConfigurationFinishEvent
 import org.gradle.tooling.events.configuration.ProjectConfigurationOperationDescriptor
+import org.gradle.tooling.events.configuration.ProjectConfigurationStartEvent
 import org.gradle.tooling.events.download.FileDownloadFinishEvent
 import org.gradle.tooling.events.download.FileDownloadOperationDescriptor
 import org.gradle.tooling.events.download.FileDownloadStartEvent
+import org.gradle.tooling.events.task.TaskFinishEvent
 import org.gradle.tooling.events.task.TaskOperationDescriptor
+import org.gradle.tooling.events.task.TaskStartEvent
+import org.gradle.tooling.events.test.TestFinishEvent
 import org.gradle.tooling.events.test.TestOperationDescriptor
+import org.gradle.tooling.events.test.TestStartEvent
+import org.gradle.tooling.events.transform.TransformFinishEvent
 import org.gradle.tooling.events.transform.TransformOperationDescriptor
+import org.gradle.tooling.events.transform.TransformStartEvent
+import org.gradle.tooling.events.work.WorkItemFinishEvent
 import org.gradle.tooling.events.work.WorkItemOperationDescriptor
+import org.gradle.tooling.events.work.WorkItemStartEvent
 import org.gradle.util.GradleVersion
 
 import java.util.function.Predicate
@@ -222,7 +232,9 @@ class ProgressEvents implements ProgressListener {
      */
     List<Operation> getTests() {
         assertHasZeroOrMoreTrees()
-        return operations.findAll { it.test } as List
+        def testOperations = operations.findAll { it.test } as List
+        testOperations.forEach { it.assertIsTest() }
+        return testOperations
     }
 
     /**
@@ -247,7 +259,9 @@ class ProgressEvents implements ProgressListener {
      */
     List<Operation> getTasks() {
         assertHasZeroOrMoreTrees()
-        return operations.findAll { it.task } as List
+        def taskOperations = operations.findAll { it.task } as List
+        taskOperations.forEach { it.assertIsTask() }
+        return taskOperations
     }
 
     /**
@@ -383,6 +397,43 @@ class ProgressEvents implements ProgressListener {
             return !test && !task && !workItem && !projectConfiguration && !transform
         }
 
+        void assertIsTask() {
+            assert startEvent instanceof TaskStartEvent
+            assert finishEvent instanceof TaskFinishEvent
+            assert descriptor instanceof TaskOperationDescriptor
+        }
+
+        void assertIsTest() {
+            assert startEvent instanceof TestStartEvent
+            assert finishEvent instanceof TestFinishEvent
+            assert descriptor instanceof TestOperationDescriptor
+        }
+
+        void assertIsProjectConfiguration() {
+            assert startEvent instanceof ProjectConfigurationStartEvent
+            assert finishEvent instanceof ProjectConfigurationFinishEvent
+            assert descriptor instanceof ProjectConfigurationOperationDescriptor
+        }
+
+        void assertIsWorkItem() {
+            assert startEvent instanceof WorkItemStartEvent
+            assert finishEvent instanceof WorkItemFinishEvent
+            assert descriptor instanceof WorkItemOperationDescriptor
+        }
+
+        void assertIsTransform() {
+            assert startEvent instanceof TransformStartEvent
+            assert finishEvent instanceof TransformFinishEvent
+            assert descriptor instanceof TransformOperationDescriptor
+        }
+
+        void assertIsDownload(URI uri) {
+            assert startEvent instanceof FileDownloadStartEvent
+            assert finishEvent instanceof FileDownloadFinishEvent
+            assert descriptor instanceof FileDownloadOperationDescriptor
+            assert descriptor.uri == uri
+        }
+
         boolean isSuccessful() {
             return result instanceof SuccessResult
         }
@@ -456,13 +507,6 @@ class ProgressEvents implements ProgressListener {
             return parent == null
                 ? false
                 : (predicate.test(parent) || parent.hasAncestor(predicate))
-        }
-
-        void isDownload(URI uri) {
-            assert startEvent instanceof FileDownloadStartEvent
-            assert finishEvent instanceof FileDownloadFinishEvent
-            assert descriptor instanceof FileDownloadOperationDescriptor
-            assert descriptor.uri == uri
         }
     }
 
