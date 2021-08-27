@@ -90,7 +90,7 @@ class BuildProgressCrossVersionSpec extends AbstractHttpCrossVersionSpec {
     @TargetGradleVersion(">=3.5 <4.0")
     def "generates events for downloading artifacts"() {
         given:
-        def modules = setupBuildWithArtifactDownload()
+        def modules = setupBuildWithArtifactDownloadDuringConfiguration()
 
         def projectB = modules.projectB
         def projectC = modules.projectC

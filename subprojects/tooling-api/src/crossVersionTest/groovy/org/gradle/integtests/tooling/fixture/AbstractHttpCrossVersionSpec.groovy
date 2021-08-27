@@ -42,7 +42,7 @@ abstract class AbstractHttpCrossVersionSpec extends ToolingApiSpecification {
         return new MavenFileRepository(file(name))
     }
 
-    Modules setupBuildWithArtifactDownload() {
+    Modules setupBuildWithArtifactDownloadDuringConfiguration() {
         toolingApi.requireIsolatedUserHome()
 
         def projectB = mavenHttpRepo.module('group', 'projectB', '1.0').publish()
@@ -60,7 +60,6 @@ abstract class AbstractHttpCrossVersionSpec extends ToolingApiSpecification {
             repositories {
                maven { url '${mavenHttpRepo.uri}' }
             }
-
             dependencies {
                 implementation project(':a')
                 implementation "group:projectB:1.0"
@@ -70,17 +69,47 @@ abstract class AbstractHttpCrossVersionSpec extends ToolingApiSpecification {
             configurations.compileClasspath.each { println it }
         """
 
-        projectB.pom.expectGet()
-        projectB.artifact.expectGet()
-        projectC.rootMetaData.expectGet()
-        projectC.pom.expectGet()
-        projectC.artifact.expectGet()
+        def modules = new Modules(projectB, projectC, projectD)
+        modules.expectResolved()
+        return modules
+    }
 
-        projectD.pom.expectGet()
-        projectD.metaData.expectGet()
-        projectD.artifact.expectGet()
+    Modules setupBuildWithArtifactDownloadDuringTaskExecution() {
+        toolingApi.requireIsolatedUserHome()
 
-        return new Modules(projectB, projectC, projectD)
+        def projectB = mavenHttpRepo.module('group', 'projectB', '1.0').publish()
+        def projectC = mavenHttpRepo.module('group', 'projectC', '1.5').publish()
+        def projectD = mavenHttpRepo.module('group', 'projectD', '2.0-SNAPSHOT').publish()
+
+        settingsFile << """
+            rootProject.name = 'root'
+            include 'a'
+        """
+        buildFile << """
+            allprojects {
+                apply plugin:'java-library'
+            }
+            repositories {
+               maven { url '${mavenHttpRepo.uri}' }
+            }
+            dependencies {
+                implementation project(':a')
+                implementation "group:projectB:1.0"
+                implementation "group:projectC:1.+"
+                implementation "group:projectD:2.0-SNAPSHOT"
+            }
+            task resolve {
+                def files = configurations.compileClasspath
+                inputs.files files
+                doFirst {
+                    files.forEach { println(it) }
+                }
+            }
+        """
+
+        def modules = new Modules(projectB, projectC, projectD)
+        modules.expectResolved()
+        return modules
     }
 
     static class Modules {
@@ -92,6 +121,18 @@ abstract class AbstractHttpCrossVersionSpec extends ToolingApiSpecification {
             this.projectB = projectB
             this.projectC = projectC
             this.projectD = projectD
+        }
+
+        def expectResolved() {
+            projectB.pom.expectGet()
+            projectB.artifact.expectGet()
+            projectC.rootMetaData.expectGet()
+            projectC.pom.expectGet()
+            projectC.artifact.expectGet()
+
+            projectD.pom.expectGet()
+            projectD.metaData.expectGet()
+            projectD.artifact.expectGet()
         }
     }
 }
