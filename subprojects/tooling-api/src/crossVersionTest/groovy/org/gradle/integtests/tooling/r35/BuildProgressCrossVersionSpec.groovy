@@ -131,7 +131,7 @@ class BuildProgressCrossVersionSpec extends AbstractHttpCrossVersionSpec {
 
         def configureA = events.operation("Configure project :a")
         configureA.parent == resolveCompile
-        resolveCompile.children == [configureA, downloadBMetadata, downloadCRootMetadata, downloadCPom, downloadDMavenMetadata, downloadDPom, downloadDArtifact]
+        resolveCompile.children == [configureA, downloadBMetadata, downloadCRootMetadata, downloadCPom, downloadDMavenMetadata, downloadDPom]
         resolveArtifactA.children.isEmpty()
         resolveArtifactB.children == [downloadBArtifact]
         resolveArtifactC.children == [downloadCArtifact]
